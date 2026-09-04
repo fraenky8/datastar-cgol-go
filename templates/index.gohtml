@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../assets/style.css">
+    <script type="module" src="../assets/datastar.js"></script>
+    <title>Conway's Game of Life with Datastar and Go</title>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h2>Conway's Game of Life with Datastar and Go</h2>
+        <hr>
+    </header>
+    <main id="main">
+        {{template "gameboard" }}
+    </main>
+    <footer>
+        <hr>
+        BE running on {{ .runtime_GOOS }}/{{ .runtime_GOARCH }} with {{ .runtime_version }} with
+        rev {{ .revision }} built on {{ .buildTS }} UTC, FE powered by 🚀 Datastar
+    </footer>
+</div>
+</body>
+</html>
