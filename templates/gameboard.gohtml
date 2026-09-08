@@ -1,13 +1,19 @@
 {{ define "gameboard" }}
-    <div id="game-board">
-        {{ range .Cells }}
+    <div
+            id="game-board"
+            data-on:pointerdown="
+                evt.target.classList.add('alive');
+                @post('/tap?x=' + evt.target.dataset.x + '&y=' + evt.target.dataset.y)
+            "
+    >
+        {{ range $y, $row := .Cells }}
             <div class="row">
-                {{ range . }}
-                    {{ if . }}
-                        <div class="cell alive"></div>
-                    {{ else }}
-                        <div class="cell"></div>
-                    {{ end }}
+                {{ range $x, $alive := $row }}
+                    <div
+                            class="cell{{ if $alive }} alive{{ end }}"
+                            data-x="{{ $x }}"
+                            data-y="{{ $y }}"
+                    ></div>
                 {{ end }}
             </div>
         {{ end }}

@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -111,6 +112,33 @@ func main() {
 				}
 			}
 		}
+	})
+
+	r.HandleFunc("POST /tap", func(w http.ResponseWriter, r *http.Request) {
+		// Note that errors are explicit ignored and made a NOOP, hence the return of http.StatusNoContent
+		x, err := strconv.Atoi(r.URL.Query().Get("x"))
+		if err != nil {
+			logger.Error(r.Pattern, "err", err)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		y, err := strconv.Atoi(r.URL.Query().Get("y"))
+		if err != nil {
+			logger.Error(r.Pattern, "err", err)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		logger.Info(r.Pattern, "x", x, "y", y)
+
+		err = g.Set(x, y)
+		if err != nil {
+			logger.Error(r.Pattern, "err", err)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	})
 
 	s := &http.Server{

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"math"
@@ -66,12 +67,17 @@ func (b Board) alive(x, y int) bool {
 type Game struct {
 	logger *slog.Logger
 	subs   map[*Sub]struct{}
+	taps   chan tap
 
 	current, next Board
 	interval      time.Duration
 	w, h          int
 
 	mu sync.Mutex
+}
+
+type tap struct {
+	x, y int
 }
 
 func NewGame(numCells uint, refreshInterval time.Duration, l *slog.Logger) *Game {
@@ -100,7 +106,47 @@ func NewGame(numCells uint, refreshInterval time.Duration, l *slog.Logger) *Game
 		h:        h,
 		subs:     make(map[*Sub]struct{}),
 		logger:   logger.WithGroup("game"),
+		taps:     make(chan tap, 10), // 10 as sensible default to avoid blocking clients
 	}
+}
+
+func (g *Game) Start(ctx context.Context) {
+	t := time.NewTicker(g.interval)
+	defer t.Stop()
+
+	g.logger.Debug("game started")
+	for {
+		select {
+		case <-ctx.Done():
+			g.logger.Debug("game stopped", "err", ctx.Err())
+			return
+		case <-t.C:
+			g.applyTaps() // guarantees that all accumulated taps are accounted for withing the g.interval duration by draining the channel
+			g.step()
+			g.publish()
+		}
+	}
+}
+
+func (g *Game) applyTaps() {
+	for {
+		select {
+		case tap := <-g.taps:
+			g.current.set(tap.x, tap.y, true)
+		default:
+			return
+		}
+	}
+}
+
+func (g *Game) Set(x, y int) error {
+	err := g.validCoordinates(x, y)
+	if err != nil {
+		return err
+	}
+
+	g.taps <- tap{x: x, y: y}
+	return nil
 }
 
 func (g *Game) step() {
@@ -131,23 +177,6 @@ func (g *Game) publish() {
 	}
 }
 
-func (g *Game) Start(ctx context.Context) {
-	t := time.NewTicker(g.interval)
-	defer t.Stop()
-
-	g.logger.Debug("game started")
-	for {
-		select {
-		case <-ctx.Done():
-			g.logger.Debug("game stopped", "err", ctx.Err())
-			return
-		case <-t.C:
-			g.step()
-			g.publish()
-		}
-	}
-}
-
 func (g *Game) Sub() *Sub {
 	s := &Sub{StateCh: make(chan Board, 1)}
 	g.mu.Lock()
@@ -160,6 +189,16 @@ func (g *Game) Unsub(s *Sub) {
 	g.mu.Lock()
 	delete(g.subs, s)
 	g.mu.Unlock()
+}
+
+func (g *Game) validCoordinates(x, y int) error {
+	if x < 0 || x >= g.w {
+		return errors.New("invalid x coordinate")
+	}
+	if y < 0 || y >= g.h {
+		return errors.New("invalid y coordinate")
+	}
+	return nil
 }
 
 type Sub struct {
