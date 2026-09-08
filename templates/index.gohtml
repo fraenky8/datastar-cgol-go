@@ -12,7 +12,7 @@
         <h2>Conway's Game of Life with Datastar and Go</h2>
         <hr>
     </header>
-    <main id="main">
+    <main id="main" data-init="@post('/', {retry: 'never'})">
         {{template "gameboard" }}
     </main>
     <footer>

@@ -1,5 +1,15 @@
 {{ define "gameboard" }}
-    <section>
-        TODO
-    </section>
+    <div id="game-board">
+        {{ range .Cells }}
+            <div class="row">
+                {{ range . }}
+                    {{ if . }}
+                        <div class="cell alive"></div>
+                    {{ else }}
+                        <div class="cell"></div>
+                    {{ end }}
+                {{ end }}
+            </div>
+        {{ end }}
+    </div>
 {{ end }}
