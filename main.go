@@ -83,12 +83,15 @@ func main() {
 	r.Handle("/assets/", files)
 
 	r.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		debug, _ := strconv.ParseBool(cmp.Or(os.Getenv("DEBUG"), "false"))
+
 		data := map[string]any{
 			"runtime_GOOS":    runtime.GOOS,
 			"runtime_GOARCH":  runtime.GOARCH,
 			"runtime_version": runtime.Version(),
 			"revision":        revision,
 			"buildTS":         buildTimestamp,
+			"debug":           debug,
 		}
 
 		err := t.ExecuteTemplate(w, "index.gohtml", data)

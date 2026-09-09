@@ -9,16 +9,22 @@
 <body>
 <div class="container">
     <header>
-        <h2>Conway's Game of Life with Datastar and Go</h2>
-        <hr>
+        <h2>Conway's Game of Life with 🚀 Datastar and Go <img src="../assets/gopher-256.png" alt="Gopher" class="gopher"></h2>
     </header>
     <main id="main" data-init="@post('/', {retry: 'never'})">
         {{template "gameboard" }}
     </main>
     <footer>
-        <hr>
-        BE running on {{ .runtime_GOOS }}/{{ .runtime_GOARCH }} with {{ .runtime_version }} with
-        rev {{ .revision }} built on {{ .buildTS }} UTC, FE powered by 🚀 Datastar
+        {{ if .debug }}
+            <br>
+            BE running on {{ .runtime_GOOS }}/{{ .runtime_GOARCH }} with {{ .runtime_version }} with
+            rev {{ .revision }} built on {{ .buildTS }} UTC
+            <br>
+        {{ end }}
+        <br>
+        Made with ♥️ using Go and 🚀
+        <a href="https://data-star.dev/" target="_blank" rel="noopener">Datastar</a>
+        . Source on <a href="https://github.com/fraenky8/datastar-cgol-go" target="_blank" rel="noopener">GitHub</a>
     </footer>
 </div>
 </body>
