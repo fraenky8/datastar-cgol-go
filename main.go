@@ -96,7 +96,7 @@ func main() {
 		defer g.Unsub(s)
 		logger.Info(fmt.Sprintf("sub %v created", s))
 
-		sse := datastar.NewSSE(w, r)
+		sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
 
 		for {
 			select {
