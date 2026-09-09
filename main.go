@@ -114,6 +114,10 @@ func main() {
 			case board := <-s.StateCh:
 				err := patchTemplate(sse, "gameboard", board)
 				if err != nil {
+					if errors.Is(ctx.Err(), context.Canceled) {
+						// Handle client disconnects and do not send an error in this case
+						return
+					}
 					logger.Error(r.Pattern, "err", err.Error())
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
