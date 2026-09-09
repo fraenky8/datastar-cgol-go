@@ -115,14 +115,15 @@ func main() {
 				logger.Info(fmt.Sprintf("sub %v left", s), "err", r.Context().Err())
 				return
 			case board := <-s.StateCh:
-				err := patchTemplate(sse, "gameboard", board)
-				if err != nil {
-					if errors.Is(ctx.Err(), context.Canceled) {
-						// Handle client disconnects and do not send an error in this case
-						return
-					}
+				if err := patchTemplate(ctx, sse, "gameboard", board); err != nil {
 					logger.Error(r.Pattern, "err", err.Error())
-					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				if err := patchTemplate(ctx, sse, "clientcount", map[string]any{
+					"clientCount": g.SubCount(),
+				}); err != nil {
+					logger.Error(r.Pattern, "err", err.Error())
 					return
 				}
 			}
@@ -185,7 +186,12 @@ func main() {
 	logger.Info("all connections closed, shutdown complete")
 }
 
-func patchTemplate[T any](sse *datastar.ServerSentEventGenerator, tpl string, data T) error {
+func patchTemplate[T any](ctx context.Context, sse *datastar.ServerSentEventGenerator, tpl string, data T) error {
+	if errors.Is(ctx.Err(), context.Canceled) {
+		// Handle client disconnects and do not send an error in this case
+		return nil
+	}
+
 	buf := bytebufferpool.Get()
 	defer bytebufferpool.Put(buf)
 
@@ -193,5 +199,13 @@ func patchTemplate[T any](sse *datastar.ServerSentEventGenerator, tpl string, da
 		return fmt.Errorf("failed to execute template %q: %w", tpl, err)
 	}
 
-	return sse.PatchElements(buf.String())
+	if err := sse.PatchElements(buf.String()); err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			// Handle client disconnects and do not send an error in this case
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }

@@ -12,7 +12,13 @@
         <h2>Conway's Game of Life with 🚀 Datastar and Go <img src="../assets/gopher-256.png" alt="Gopher" class="gopher"></h2>
     </header>
     <main id="main" data-init="@post('/', {retry: 'never'})">
-        {{template "gameboard" }}
+        <div id="game-layout">
+            {{template "gameboard" }}
+            <aside id="game-sidebar">
+                {{ template "clientcount" }}
+                <!-- future buttons go here -->
+            </aside>
+        </div>
     </main>
     <footer>
         {{ if .debug }}
