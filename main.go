@@ -105,14 +105,14 @@ func main() {
 	r.HandleFunc("POST /{$}", func(w http.ResponseWriter, r *http.Request) {
 		s := g.Sub()
 		defer g.Unsub(s)
-		logger.Info(fmt.Sprintf("sub %v created", s))
+		logger.Info(fmt.Sprintf("sub %v created", s), "count", g.SubCount())
 
 		sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
 
 		for {
 			select {
 			case <-r.Context().Done():
-				logger.Info(fmt.Sprintf("sub %v left", s), "err", r.Context().Err())
+				logger.Info(fmt.Sprintf("sub %v left", s), "count", g.SubCount(), "err", r.Context().Err())
 				return
 			case board := <-s.StateCh:
 				if err := patchTemplate(ctx, sse, "gameboard", board); err != nil {
