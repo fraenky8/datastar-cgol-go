@@ -54,7 +54,7 @@ type config struct {
 }
 
 func main() {
-	revision = cmp.Or(os.Getenv("REVISION"), revision, "unknown")
+	revision = cmp.Or(os.Getenv("REVISION"), os.Getenv("VERCEL_GIT_COMMIT_SHA"), revision, "unknown")
 	buildTimestamp = cmp.Or(os.Getenv("BUILD_TS"), buildTimestamp, "unknown")
 
 	var cfg config
