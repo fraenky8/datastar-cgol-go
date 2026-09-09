@@ -33,7 +33,7 @@ var content embed.FS
 var (
 	t *template.Template
 
-	defaultAddr = ":8000"
+	defaultAddr = ":" + cmp.Or(os.Getenv("PORT"), "8000")
 
 	// TODO: track number of clients/user and show a stats page below which also refreshes
 )
