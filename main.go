@@ -46,11 +46,6 @@ func init() {
 	if strings.Contains(runtime.GOOS, "windows") {
 		defaultAddr = "localhost" + defaultAddr
 	}
-
-	// https://render.com/docs/environment-variables#render
-	if os.Getenv("RENDER") == "true" {
-		defaultAddr = "0.0.0.0" + defaultAddr
-	}
 }
 
 type config struct {
