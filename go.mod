@@ -1,6 +1,6 @@
 module datastar-cgol-go
 
-go 1.27
+go 1.26
 
 require (
 	github.com/starfederation/datastar-go v1.2.2
