@@ -8,7 +8,7 @@ browser over Server-Sent Events (SSE).
 
 ## Demo
 
-Check the game here: [https://datastar-cgol-go.vercel.app](https://datastar-cgol-go.vercel.app)
+Check the game here: [https://datastar-cgol-go.onrender.com](https://datastar-cgol-go.onrender.com)
 
 ![Conway's Game of Life](screenshot.png)
 
