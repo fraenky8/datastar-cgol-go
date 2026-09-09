@@ -33,6 +33,7 @@ var content embed.FS
 var (
 	t *template.Template
 
+	// https://render.com/docs/web-services#port-binding
 	defaultAddr = ":" + cmp.Or(os.Getenv("PORT"), "8000")
 
 	// TODO: track number of clients/user and show a stats page below which also refreshes
@@ -45,6 +46,11 @@ func init() {
 	if strings.Contains(runtime.GOOS, "windows") {
 		defaultAddr = "localhost" + defaultAddr
 	}
+
+	// https://render.com/docs/environment-variables#render
+	if os.Getenv("RENDER") == "true" {
+		defaultAddr = "0.0.0.0" + defaultAddr
+	}
 }
 
 type config struct {
@@ -54,7 +60,7 @@ type config struct {
 }
 
 func main() {
-	revision = cmp.Or(os.Getenv("REVISION"), os.Getenv("VERCEL_GIT_COMMIT_SHA"), revision, "unknown")
+	revision = cmp.Or(os.Getenv("REVISION"), revision, "unknown")
 	buildTimestamp = cmp.Or(os.Getenv("BUILD_TS"), buildTimestamp, "unknown")
 
 	var cfg config
