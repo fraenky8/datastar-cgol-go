@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -32,11 +33,18 @@ var content embed.FS
 var (
 	t *template.Template
 
+	defaultAddr = ":8000"
+
 	// TODO: track number of clients/user and show a stats page below which also refreshes
 )
 
 func init() {
 	t = template.Must(template.ParseFS(content, "templates/*.gohtml"))
+
+	// Convenience for Windows to avoid annoying firewall popups
+	if strings.Contains(runtime.GOOS, "windows") {
+		defaultAddr = "localhost" + defaultAddr
+	}
 }
 
 type config struct {
@@ -51,7 +59,7 @@ func main() {
 
 	var cfg config
 	fs := flag.NewFlagSet("datastar-cgol-go", flag.ExitOnError)
-	fs.StringVar(&cfg.Addr, "addr", "localhost:8000", "address for the server to listen on, in the form `host:port`")
+	fs.StringVar(&cfg.Addr, "addr", defaultAddr, "address for the server to listen on, in the form `host:port`")
 	fs.UintVar(&cfg.NumCells, "num-cells", 2500, "number of cells, will be rounded down if not sqrt'able")
 	fs.DurationVar(&cfg.RefreshInterval, "refresh-int", 200*time.Millisecond, "refresh interval")
 
@@ -178,5 +186,5 @@ func patchTemplate[T any](sse *datastar.ServerSentEventGenerator, tpl string, da
 		return fmt.Errorf("failed to execute template %q: %w", tpl, err)
 	}
 
-	return sse.PatchElements(buf.String()) // datastar.WithViewTransitions() ?
+	return sse.PatchElements(buf.String())
 }
