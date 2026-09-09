@@ -6,6 +6,10 @@ and 🚀 [Datastar](https://data-star.dev/).
 The board is shared between connected clients, with updates streamed to the
 browser over Server-Sent Events (SSE).
 
+## Demo
+
+Check the game here: [https://datastar-cgol-go.vercel.app](https://datastar-cgol-go.vercel.app)
+
 ![Conway's Game of Life](screenshot.png)
 
 ## Features
