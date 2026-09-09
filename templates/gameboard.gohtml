@@ -1,21 +1,20 @@
 {{ define "gameboard" }}
-    <div
-            id="game-board"
-            data-on:pointerdown="
-                if (evt.button === 0) {
-                    evt.target.classList.add('alive');
-                    @post('/tap?x=' + evt.target.dataset.x + '&y=' + evt.target.dataset.y);
+    <div id="game-board"
+         data-on:pointerdown="
+            if (evt.button === 0) {
+                evt.target.classList.add('alive');
+                @post('/tap?x=' + evt.target.dataset.x + '&y=' + evt.target.dataset.y);
+            }
+        "
+         data-on:pointermove="
+            if (evt.buttons === 1) {
+                const cell = document.elementFromPoint(evt.clientX, evt.clientY)?.closest('.cell');
+                if (cell && !cell.classList.contains('alive')) {
+                    cell.classList.add('alive');
+                    @post('/tap?x=' + cell.dataset.x + '&y=' + cell.dataset.y);
                 }
-            "
-            data-on:pointermove="
-                if (evt.buttons === 1) {
-                    const cell = document.elementFromPoint(evt.clientX, evt.clientY)?.closest('.cell');
-                    if (cell && !cell.classList.contains('alive')) {
-                        cell.classList.add('alive');
-                        @post('/tap?x=' + cell.dataset.x + '&y=' + cell.dataset.y);
-                    }
-                }
-            "
+            }
+        "
     >
         {{ range $y, $row := .Cells }}
             <div class="row">

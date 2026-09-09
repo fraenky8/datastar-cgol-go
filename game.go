@@ -203,6 +203,13 @@ func (g *Game) validCoordinates(x, y int) error {
 	return nil
 }
 
+func (g *Game) SubCount() int {
+	g.mu.Lock()
+	n := len(g.subs)
+	g.mu.Unlock()
+	return n
+}
+
 type Sub struct {
 	StateCh chan Board
 }

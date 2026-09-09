@@ -33,6 +33,7 @@ var content embed.FS
 var (
 	t *template.Template
 
+	// https://render.com/docs/web-services#port-binding
 	defaultAddr = ":" + cmp.Or(os.Getenv("PORT"), "8000")
 
 	// TODO: track number of clients/user and show a stats page below which also refreshes
@@ -54,7 +55,7 @@ type config struct {
 }
 
 func main() {
-	revision = cmp.Or(os.Getenv("REVISION"), os.Getenv("VERCEL_GIT_COMMIT_SHA"), revision, "unknown")
+	revision = cmp.Or(os.Getenv("REVISION"), revision, "unknown")
 	buildTimestamp = cmp.Or(os.Getenv("BUILD_TS"), buildTimestamp, "unknown")
 
 	var cfg config
@@ -105,24 +106,25 @@ func main() {
 	r.HandleFunc("POST /{$}", func(w http.ResponseWriter, r *http.Request) {
 		s := g.Sub()
 		defer g.Unsub(s)
-		logger.Info(fmt.Sprintf("sub %v created", s))
+		logger.Info(fmt.Sprintf("sub %v created", s), "count", g.SubCount())
 
 		sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
 
 		for {
 			select {
 			case <-r.Context().Done():
-				logger.Info(fmt.Sprintf("sub %v left", s), "err", r.Context().Err())
+				logger.Info(fmt.Sprintf("sub %v left", s), "count", g.SubCount(), "err", r.Context().Err())
 				return
 			case board := <-s.StateCh:
-				err := patchTemplate(sse, "gameboard", board)
-				if err != nil {
-					if errors.Is(ctx.Err(), context.Canceled) {
-						// Handle client disconnects and do not send an error in this case
-						return
-					}
+				if err := patchTemplate(ctx, sse, "gameboard", board); err != nil {
 					logger.Error(r.Pattern, "err", err.Error())
-					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				if err := patchTemplate(ctx, sse, "clientcount", map[string]any{
+					"clientCount": g.SubCount(),
+				}); err != nil {
+					logger.Error(r.Pattern, "err", err.Error())
 					return
 				}
 			}
@@ -185,7 +187,12 @@ func main() {
 	logger.Info("all connections closed, shutdown complete")
 }
 
-func patchTemplate[T any](sse *datastar.ServerSentEventGenerator, tpl string, data T) error {
+func patchTemplate[T any](ctx context.Context, sse *datastar.ServerSentEventGenerator, tpl string, data T) error {
+	if errors.Is(ctx.Err(), context.Canceled) {
+		// Handle client disconnects and do not send an error in this case
+		return nil
+	}
+
 	buf := bytebufferpool.Get()
 	defer bytebufferpool.Put(buf)
 
@@ -193,5 +200,13 @@ func patchTemplate[T any](sse *datastar.ServerSentEventGenerator, tpl string, da
 		return fmt.Errorf("failed to execute template %q: %w", tpl, err)
 	}
 
-	return sse.PatchElements(buf.String())
+	if err := sse.PatchElements(buf.String()); err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			// Handle client disconnects and do not send an error in this case
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }

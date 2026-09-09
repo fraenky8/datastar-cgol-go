@@ -4,11 +4,24 @@
     text-align: center;
 }
 
+#game-layout {
+    position: relative;
+    display: inline-block;
+}
+
 #game-board {
     display: inline-block;
     border: 1px solid black;
     user-select: none;
     touch-action: none;
+}
+
+#game-sidebar {
+    position: absolute;
+    left: calc(100% + 15px);
+    top: 0;
+    width: 220px;
+    text-align: left;
 }
 
 .row {
