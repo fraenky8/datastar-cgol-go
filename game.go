@@ -16,6 +16,7 @@ import (
 // And adapted for readability and newer Go code/optimizations. AI 🤖 helped.
 // Also, we do not wrap around cells at the border but let them just die.
 // Added context cancellation.
+// Added Pub/Sub functionality.
 
 type Cells [][]bool
 
@@ -90,8 +91,9 @@ func NewGame(numCells uint, refreshInterval time.Duration, l *slog.Logger) *Game
 		numCells = n
 		logFn = logger.Warn
 	}
-	logFn(fmt.Sprintf("effective num-cells: %d (%dx%d)", numCells, sqrt, sqrt))
+
 	w, h := sqrt, sqrt
+	logFn(fmt.Sprintf("effective num-cells: %d (%dx%d)", numCells, w, h))
 
 	a := newBoard(w, h)
 	for i := 0; i < (w * h / 10); i++ {
@@ -105,7 +107,7 @@ func NewGame(numCells uint, refreshInterval time.Duration, l *slog.Logger) *Game
 		w:        w,
 		h:        h,
 		subs:     make(map[*Sub]struct{}),
-		logger:   logger.WithGroup("game"),
+		logger:   logger,
 		taps:     make(chan tap, 10), // 10 as sensible default to avoid blocking clients
 	}
 }
@@ -114,7 +116,7 @@ func (g *Game) Start(ctx context.Context) {
 	t := time.NewTicker(g.interval)
 	defer t.Stop()
 
-	g.logger.Debug("game started")
+	g.logger.Debug("game started", "w", g.w, "h", g.h, "refresh-interval", g.interval)
 	for {
 		select {
 		case <-ctx.Done():
