@@ -123,7 +123,12 @@ func (g *Game) Start(ctx context.Context) {
 			g.logger.Debug("game stopped", "err", ctx.Err())
 			return
 		case <-t.C:
-			g.applyTaps() // guarantees that all accumulated taps are accounted for withing the g.interval duration by draining the channel
+			// Nobody here, lets not advance to the next generation
+			if g.SubCount() == 0 {
+				continue
+			}
+
+			g.applyTaps() // Drains queued taps so they are all applied before the next generation
 			g.step()
 			g.publish()
 		}
