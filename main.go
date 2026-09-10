@@ -35,8 +35,6 @@ var (
 
 	// https://render.com/docs/web-services#port-binding
 	defaultAddr = ":" + cmp.Or(os.Getenv("PORT"), "8000")
-
-	// TODO: track number of clients/user and show a stats page below which also refreshes
 )
 
 func init() {
@@ -54,6 +52,13 @@ type config struct {
 	RefreshInterval time.Duration
 }
 
+func (c config) validate() error {
+	if c.RefreshInterval <= 0 {
+		return errors.New("refresh interval must be greater than zero")
+	}
+	return nil
+}
+
 func main() {
 	revision = cmp.Or(os.Getenv("REVISION"), revision, "unknown")
 	buildTimestamp = cmp.Or(os.Getenv("BUILD_TS"), buildTimestamp, "unknown")
@@ -65,6 +70,12 @@ func main() {
 	fs.DurationVar(&cfg.RefreshInterval, "refresh-int", 200*time.Millisecond, "refresh interval")
 
 	if err := fs.Parse(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+		return
+	}
+
+	if err := cfg.validate(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 		return
