@@ -121,10 +121,14 @@ func main() {
 
 		sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
 
+		rCtx := r.Context()
 		for {
 			select {
-			case <-r.Context().Done():
-				logger.Info(fmt.Sprintf("sub %v left", s), "count", g.SubCount(), "err", r.Context().Err())
+			case <-ctx.Done(): // Application shutdown
+				logger.Info("app shutdown", "err", ctx.Err())
+				return
+			case <-rCtx.Done(): // Client disconnect
+				logger.Info(fmt.Sprintf("sub %v left", s), "count", g.SubCount(), "err", rCtx.Err())
 				return
 			case board := <-s.StateCh:
 				if err := patchTemplate(ctx, sse, "gameboard", board); err != nil {
@@ -200,7 +204,7 @@ func main() {
 }
 
 func patchTemplate[T any](ctx context.Context, sse *datastar.ServerSentEventGenerator, tpl string, data T) error {
-	if errors.Is(ctx.Err(), context.Canceled) {
+	if errors.Is(ctx.Err(), context.Canceled) || sse.IsClosed() {
 		// Handle client disconnects and do not send an error in this case
 		return nil
 	}
@@ -213,7 +217,7 @@ func patchTemplate[T any](ctx context.Context, sse *datastar.ServerSentEventGene
 	}
 
 	if err := sse.PatchElements(buf.String()); err != nil {
-		if errors.Is(ctx.Err(), context.Canceled) {
+		if errors.Is(ctx.Err(), context.Canceled) || sse.IsClosed() {
 			// Handle client disconnects and do not send an error in this case
 			return nil
 		}
