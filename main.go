@@ -128,7 +128,7 @@ func main() {
 				logger.Info("app shutdown", "err", ctx.Err())
 				return
 			case <-rCtx.Done(): // Client disconnect
-				logger.Info(fmt.Sprintf("sub %v left", s), "count", g.SubCount(), "err", rCtx.Err())
+				logger.Info(fmt.Sprintf("sub %v left", s), "count", game.SubCount()-1, "err", rCtx.Err())
 				return
 			case board := <-s.Board:
 				if err := patchTemplate(ctx, sse, "gameboard", board); err != nil {
