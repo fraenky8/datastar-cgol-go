@@ -35,8 +35,6 @@ var (
 
 	// https://render.com/docs/web-services#port-binding
 	defaultAddr = ":" + cmp.Or(os.Getenv("PORT"), "8000")
-
-	// TODO: track number of clients/user and show a stats page below which also refreshes
 )
 
 func init() {
@@ -54,6 +52,13 @@ type config struct {
 	RefreshInterval time.Duration
 }
 
+func (c config) validate() error {
+	if c.RefreshInterval <= 0 {
+		return errors.New("refresh interval must be greater than zero")
+	}
+	return nil
+}
+
 func main() {
 	revision = cmp.Or(os.Getenv("REVISION"), revision, "unknown")
 	buildTimestamp = cmp.Or(os.Getenv("BUILD_TS"), buildTimestamp, "unknown")
@@ -65,6 +70,12 @@ func main() {
 	fs.DurationVar(&cfg.RefreshInterval, "refresh-int", 200*time.Millisecond, "refresh interval")
 
 	if err := fs.Parse(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+		return
+	}
+
+	if err := cfg.validate(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 		return
@@ -110,10 +121,14 @@ func main() {
 
 		sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
 
+		rCtx := r.Context()
 		for {
 			select {
-			case <-r.Context().Done():
-				logger.Info(fmt.Sprintf("sub %v left", s), "count", g.SubCount(), "err", r.Context().Err())
+			case <-ctx.Done(): // Application shutdown
+				logger.Info("app shutdown", "err", ctx.Err())
+				return
+			case <-rCtx.Done(): // Client disconnect
+				logger.Info(fmt.Sprintf("sub %v left", s), "count", g.SubCount(), "err", rCtx.Err())
 				return
 			case board := <-s.StateCh:
 				if err := patchTemplate(ctx, sse, "gameboard", board); err != nil {
@@ -172,6 +187,7 @@ func main() {
 		err := server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Error("ListenAndServe error", "err", err.Error())
+			stop() // If we fail for some reason, fail the entire program.
 		}
 	}(s, logger)
 
@@ -188,7 +204,7 @@ func main() {
 }
 
 func patchTemplate[T any](ctx context.Context, sse *datastar.ServerSentEventGenerator, tpl string, data T) error {
-	if errors.Is(ctx.Err(), context.Canceled) {
+	if errors.Is(ctx.Err(), context.Canceled) || sse.IsClosed() {
 		// Handle client disconnects and do not send an error in this case
 		return nil
 	}
@@ -201,7 +217,7 @@ func patchTemplate[T any](ctx context.Context, sse *datastar.ServerSentEventGene
 	}
 
 	if err := sse.PatchElements(buf.String()); err != nil {
-		if errors.Is(ctx.Err(), context.Canceled) {
+		if errors.Is(ctx.Err(), context.Canceled) || sse.IsClosed() {
 			// Handle client disconnects and do not send an error in this case
 			return nil
 		}
