@@ -175,7 +175,11 @@ func (g *Game) publish() {
 	g.mu.Unlock()
 
 	for _, sub := range subs {
-		sub.StateCh <- state
+		select {
+		case sub.StateCh <- state:
+		default:
+			// Subscriber is behind; drop this generation.
+		}
 	}
 }
 
