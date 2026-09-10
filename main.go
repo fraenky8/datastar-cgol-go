@@ -172,6 +172,7 @@ func main() {
 		err := server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Error("ListenAndServe error", "err", err.Error())
+			stop() // If we fail for some reason, fail the entire program.
 		}
 	}(s, logger)
 
