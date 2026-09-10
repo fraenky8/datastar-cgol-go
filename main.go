@@ -86,8 +86,8 @@ func main() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	g := NewGame(cfg.NumCells, cfg.RefreshInterval, logger)
-	go g.Start(ctx)
+	game := NewGame(cfg.NumCells, cfg.RefreshInterval, logger)
+	go game.Start(ctx)
 
 	r := http.NewServeMux()
 
@@ -115,9 +115,9 @@ func main() {
 	})
 
 	r.HandleFunc("POST /{$}", func(w http.ResponseWriter, r *http.Request) {
-		s := g.Sub()
-		defer g.Unsub(s)
-		logger.Info(fmt.Sprintf("sub %v created", s), "count", g.SubCount())
+		s := game.Sub()
+		defer game.Unsub(s)
+		logger.Info(fmt.Sprintf("sub %v created", s), "count", game.SubCount())
 
 		sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
 
@@ -128,16 +128,16 @@ func main() {
 				logger.Info("app shutdown", "err", ctx.Err())
 				return
 			case <-rCtx.Done(): // Client disconnect
-				logger.Info(fmt.Sprintf("sub %v left", s), "count", g.SubCount(), "err", rCtx.Err())
+				logger.Info(fmt.Sprintf("sub %v left", s), "count", game.SubCount()-1, "err", rCtx.Err())
 				return
-			case board := <-s.StateCh:
+			case board := <-s.Board:
 				if err := patchTemplate(ctx, sse, "gameboard", board); err != nil {
 					logger.Error(r.Pattern, "err", err.Error())
 					return
 				}
 
 				if err := patchTemplate(ctx, sse, "clientcount", map[string]any{
-					"clientCount": g.SubCount(),
+					"clientCount": game.SubCount(),
 				}); err != nil {
 					logger.Error(r.Pattern, "err", err.Error())
 					return
@@ -163,7 +163,7 @@ func main() {
 		}
 		logger.Info(r.Pattern, "x", x, "y", y)
 
-		err = g.Set(x, y)
+		err = game.Set(x, y)
 		if err != nil {
 			logger.Error(r.Pattern, "err", err)
 			w.WriteHeader(http.StatusNoContent)
