@@ -166,7 +166,7 @@ func (g *Game) step() {
 }
 
 func (g *Game) publish() {
-	state := Board{
+	board := Board{
 		Cells: g.current.Cells.clone(),
 		w:     g.current.w,
 		h:     g.current.h,
@@ -181,7 +181,7 @@ func (g *Game) publish() {
 
 	for _, sub := range subs {
 		select {
-		case sub.StateCh <- state:
+		case sub.Board <- board:
 		default:
 			// Subscriber is behind; drop this generation.
 		}
@@ -189,7 +189,7 @@ func (g *Game) publish() {
 }
 
 func (g *Game) Sub() *Sub {
-	s := &Sub{StateCh: make(chan Board, 1)}
+	s := &Sub{Board: make(chan Board, 1)}
 	g.mu.Lock()
 	g.subs[s] = struct{}{}
 	g.mu.Unlock()
@@ -220,5 +220,5 @@ func (g *Game) SubCount() int {
 }
 
 type Sub struct {
-	StateCh chan Board
+	Board chan Board
 }
