@@ -37,7 +37,7 @@ Check the game here: [https://datastar-cgol-go.onrender.com](https://datastar-cg
 
 Install the application using `go install`:
 
-```bash
+```
 go install github.com/fraenky8/datastar-cgol-go@latest
 ```
 
@@ -53,7 +53,7 @@ Exit the binary via `CTRL+C`
 
 ### Available flags:
 
-```bash
+```
 $ datastar-cgol-go -help
 Usage of datastar-cgol-go:
   -addr host:port
