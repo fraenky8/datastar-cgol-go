@@ -18,6 +18,10 @@ import (
 // Added context cancellation.
 // Added Pub/Sub functionality.
 
+var (
+	errSetWithoutSubs = errors.New("called Set without subscribers")
+)
+
 type Cells [][]bool
 
 func (c Cells) clone() Cells {
@@ -147,6 +151,10 @@ func (g *Game) applyTaps() {
 }
 
 func (g *Game) Set(x, y int) error {
+	if g.SubCount() == 0 {
+		return errSetWithoutSubs
+	}
+
 	err := g.validCoordinates(x, y)
 	if err != nil {
 		return err

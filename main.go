@@ -167,14 +167,18 @@ func main() {
 		}
 		logger.Info(r.Pattern, "x", x, "y", y)
 
-		err = game.Set(x, y)
-		if err != nil {
+		if err := game.Set(x, y); err != nil {
+			if errors.Is(err, errSetWithoutSubs) {
+				logger.Error(r.Pattern, "msg", "ignored, no subs")
+				http.Error(w, "you must subscribe first before allowed to tap", http.StatusBadRequest)
+				return
+			}
 			logger.Error(r.Pattern, "err", err)
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusAccepted)
 	})
 
 	s := &http.Server{
