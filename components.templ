@@ -1,0 +1,86 @@
+package main
+
+templ indexPage(data pageData) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<link rel="stylesheet" href="assets/style.css"/>
+			<script type="module" src="assets/datastar.js"></script>
+			<title>Conway's Game of Life with Datastar and Go</title>
+		</head>
+		<body>
+			<div class="container">
+				<header>
+					<h2>Conway's Game of Life with 🚀 Datastar and Go <img src="assets/gopher-256.png" alt="Gopher" class="gopher"/></h2>
+				</header>
+				<main id="main" data-init="@post('/', {retry: 'never'})">
+					<div id="game-layout">
+						@gameBoard(data.cells)
+						<aside id="game-sidebar">
+							@clientCount(0)
+							<!-- future buttons go here -->
+						</aside>
+					</div>
+				</main>
+				<footer>
+					if data.debug {
+						<br/>
+						BE running on { data.runtimeGOOS }/{ data.runtimeGOARCH } with { data.runtimeVersion } with
+						rev { data.revision } built on { data.buildTS } UTC
+						<br/>
+					}
+					<br/>
+					Made with ♥️ using Go and 🚀
+					<a href="https://data-star.dev/" target="_blank" rel="noopener">Datastar</a>
+					with some help from 🤖. Source on <a href="https://github.com/fraenky8/datastar-cgol-go" target="_blank" rel="noopener">GitHub</a>
+				</footer>
+			</div>
+		</body>
+	</html>
+}
+
+templ gameBoard(cells Cells) {
+	<div
+		id="game-board"
+		data-on:pointerdown="
+            if (evt.button === 0) {
+                evt.target.classList.add('alive');
+                @post('/tap?x=' + evt.target.dataset.x + '&y=' + evt.target.dataset.y);
+            }
+        "
+		data-on:pointermove="
+            if (evt.buttons === 1) {
+                const cell = document.elementFromPoint(evt.clientX, evt.clientY)?.closest('.cell');
+                if (cell && !cell.classList.contains('alive')) {
+                    cell.classList.add('alive');
+                    @post('/tap?x=' + cell.dataset.x + '&y=' + cell.dataset.y);
+                }
+            }
+        "
+	>
+		for y, row := range cells {
+			<div class="row">
+				for x, alive := range row {
+					{{
+						class := "cell"
+						if alive {
+							class += " alive"
+						}
+					}}
+					<div
+						class={ class }
+						data-x={ x }
+						data-y={ y }
+					></div>
+				}
+			</div>
+		}
+	</div>
+}
+
+templ clientCount(count int) {
+	<div id="client-count">
+		Connected users: { count }
+	</div>
+}

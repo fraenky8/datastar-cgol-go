@@ -27,7 +27,7 @@ Check the game here: [https://datastar-cgol-go.onrender.com](https://datastar-cg
 
 - [Go](https://go.dev/)
 - [Datastar](https://data-star.dev/)
-- Go `html/template`
+- [Templ](https://templ.guide/)
 - Server-Sent Events (SSE)
 - Brotli compression
 

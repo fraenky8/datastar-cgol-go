@@ -6,6 +6,11 @@ github.com/CAFxX/httpcompression/contrib/compress/gzip
 github.com/CAFxX/httpcompression/contrib/compress/zlib
 github.com/CAFxX/httpcompression/contrib/internal/utils
 github.com/CAFxX/httpcompression/contrib/klauspost/zstd
+# github.com/a-h/templ v0.3.1020
+## explicit; go 1.25.0
+github.com/a-h/templ
+github.com/a-h/templ/runtime
+github.com/a-h/templ/safehtml
 # github.com/andybalholm/brotli v1.2.3
 ## explicit; go 1.22
 github.com/andybalholm/brotli
