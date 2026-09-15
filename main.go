@@ -7,7 +7,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
@@ -18,8 +17,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/a-h/templ"
 	"github.com/starfederation/datastar-go/datastar"
-	"github.com/valyala/bytebufferpool"
 )
 
 var (
@@ -27,19 +26,17 @@ var (
 	buildTimestamp = "unknown"
 )
 
-//go:embed templates assets
+//go:embed assets
 var content embed.FS
 
 var (
-	t *template.Template
-
 	// https://render.com/docs/web-services#port-binding
 	defaultAddr = ":" + cmp.Or(os.Getenv("PORT"), "8000")
+
+	debug, _ = strconv.ParseBool(cmp.Or(os.Getenv("DEBUG"), "false"))
 )
 
 func init() {
-	t = template.Must(template.ParseFS(content, "templates/*.gohtml"))
-
 	// Convenience for Windows to avoid annoying firewall popups
 	if strings.Contains(runtime.GOOS, "windows") {
 		defaultAddr = "localhost" + defaultAddr
@@ -57,6 +54,16 @@ func (c config) validate() error {
 		return errors.New("refresh interval must be greater than zero")
 	}
 	return nil
+}
+
+type pageData struct {
+	runtimeGOOS    string
+	runtimeGOARCH  string
+	runtimeVersion string
+	revision       string
+	buildTS        string
+	cells          Cells
+	debug          bool
 }
 
 func main() {
@@ -95,19 +102,18 @@ func main() {
 	r.Handle("/assets/", files)
 
 	r.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		debug, _ := strconv.ParseBool(cmp.Or(os.Getenv("DEBUG"), "false"))
 
-		data := map[string]any{
-			"runtime_GOOS":    runtime.GOOS,
-			"runtime_GOARCH":  runtime.GOARCH,
-			"runtime_version": runtime.Version(),
-			"revision":        revision,
-			"buildTS":         buildTimestamp,
-			"debug":           debug,
+		data := pageData{
+			runtimeGOOS:    runtime.GOOS,
+			runtimeGOARCH:  runtime.GOARCH,
+			runtimeVersion: runtime.Version(),
+			revision:       revision,
+			buildTS:        buildTimestamp,
+			cells:          Cells{}, // Note empty board, but after cfg.RefreshInterval will be set.
+			debug:          debug,
 		}
 
-		err := t.ExecuteTemplate(w, "index.gohtml", data)
-		if err != nil {
+		if err := indexPage(data).Render(r.Context(), w); err != nil {
 			logger.Error(r.Pattern, "err", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -131,14 +137,12 @@ func main() {
 				logger.Info(fmt.Sprintf("sub %v left", s), "count", game.SubCount()-1, "err", rCtx.Err())
 				return
 			case board := <-s.Board:
-				if err := patchTemplate(ctx, sse, "gameboard", board); err != nil {
+				if err := patchTempl(ctx, sse, gameBoard(board.Cells)); err != nil {
 					logger.Error(r.Pattern, "err", err.Error())
 					return
 				}
 
-				if err := patchTemplate(ctx, sse, "clientcount", map[string]any{
-					"clientCount": game.SubCount(),
-				}); err != nil {
+				if err := patchTempl(ctx, sse, clientCount(game.SubCount())); err != nil {
 					logger.Error(r.Pattern, "err", err.Error())
 					return
 				}
@@ -163,14 +167,18 @@ func main() {
 		}
 		logger.Info(r.Pattern, "x", x, "y", y)
 
-		err = game.Set(x, y)
-		if err != nil {
+		if err := game.Set(x, y); err != nil {
+			if errors.Is(err, errSetWithoutSubs) {
+				logger.Error(r.Pattern, "msg", "ignored, no subs")
+				http.Error(w, "you must subscribe first before allowed to tap", http.StatusBadRequest)
+				return
+			}
 			logger.Error(r.Pattern, "err", err)
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusAccepted)
 	})
 
 	s := &http.Server{
@@ -203,20 +211,13 @@ func main() {
 	logger.Info("all connections closed, shutdown complete")
 }
 
-func patchTemplate[T any](ctx context.Context, sse *datastar.ServerSentEventGenerator, tpl string, data T) error {
+func patchTempl(ctx context.Context, sse *datastar.ServerSentEventGenerator, c templ.Component) error {
 	if errors.Is(ctx.Err(), context.Canceled) || sse.IsClosed() {
 		// Handle client disconnects and do not send an error in this case
 		return nil
 	}
 
-	buf := bytebufferpool.Get()
-	defer bytebufferpool.Put(buf)
-
-	if err := t.ExecuteTemplate(buf, tpl, data); err != nil {
-		return fmt.Errorf("failed to execute template %q: %w", tpl, err)
-	}
-
-	if err := sse.PatchElements(buf.String()); err != nil {
+	if err := sse.PatchElementTempl(c); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) || sse.IsClosed() {
 			// Handle client disconnects and do not send an error in this case
 			return nil
