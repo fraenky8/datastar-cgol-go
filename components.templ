@@ -16,7 +16,8 @@ templ indexPage(data pageData) {
 				</header>
 				<main id="main" data-init="@post('/', {retry: 'never'})">
 					<div id="game-layout">
-						@gameBoard(data.cells)
+						// Note empty board, but will be set after cfg.RefreshInterval.
+						@gameBoard(nil)
 						<aside id="game-sidebar">
 							@clientCount(0)
 							<!-- future buttons go here -->

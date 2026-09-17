@@ -62,7 +62,6 @@ type pageData struct {
 	runtimeVersion string
 	revision       string
 	buildTS        string
-	cells          Cells
 	debug          bool
 }
 
@@ -109,7 +108,6 @@ func main() {
 			runtimeVersion: runtime.Version(),
 			revision:       revision,
 			buildTS:        buildTimestamp,
-			cells:          Cells{}, // Note empty board, but after cfg.RefreshInterval will be set.
 			debug:          debug,
 		}
 
