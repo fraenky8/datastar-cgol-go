@@ -62,14 +62,8 @@ templ gameBoard(cells Cells) {
 		for y, row := range cells {
 			<div class="row">
 				for x, alive := range row {
-					{{
-						class := "cell"
-						if alive {
-							class += " alive"
-						}
-					}}
 					<div
-						class={ class }
+						class={ "cell", templ.KV("alive", alive) }
 						data-x={ x }
 						data-y={ y }
 					></div>

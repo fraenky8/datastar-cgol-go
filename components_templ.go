@@ -159,11 +159,7 @@ func gameBoard(cells Cells) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			for x, alive := range row {
-				class := "cell"
-				if alive {
-					class += " alive"
-				}
-				var templ_7745c5c3_Var8 = []any{class}
+				var templ_7745c5c3_Var8 = []any{"cell", templ.KV("alive", alive)}
 				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var8...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -188,7 +184,7 @@ func gameBoard(cells Cells) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(x)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components.templ`, Line: 73, Col: 16}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components.templ`, Line: 67, Col: 16}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 				if templ_7745c5c3_Err != nil {
@@ -201,7 +197,7 @@ func gameBoard(cells Cells) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(y)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components.templ`, Line: 74, Col: 16}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components.templ`, Line: 68, Col: 16}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 				if templ_7745c5c3_Err != nil {
@@ -253,7 +249,7 @@ func clientCount(count int) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(count)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components.templ`, Line: 84, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components.templ`, Line: 78, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
