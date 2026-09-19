@@ -1,0 +1,83 @@
+name: static analysis
+
+on:
+  push:
+    # Run on all branches but not on tags.
+    # https://github.com/orgs/community/discussions/25615
+    branches:
+      - "**"
+    tags-ignore:
+      - "**"
+  workflow_dispatch:
+
+# We limit the concurrent runs of this workflow on per branch (ref) level.
+# https://docs.github.com/en/enterprise-cloud@latest/actions/using-jobs/using-concurrency#example-using-concurrency-and-the-default-behavior
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: |
+          go build -o datastar-cgol-go -mod=vendor -ldflags \
+          "-X 'main.buildTimestamp=$(date '+%b %d %Y %T')' -X main.revision=ci" \
+          .
+
+  checks-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Install templ
+        run: |
+          go install github.com/a-h/templ/cmd/templ@latest
+
+      - name: Check gofmt
+        run: |
+          files=$(go fmt -mod=vendor ./...)
+          [ -z "$files" ] && exit 0
+
+          echo "Files not formatted:"
+          echo
+          for f in $files; do
+              echo "  $f"
+          done
+
+          exit 1
+
+      # Directly taken from https://github.com/rhysd/actionlint/blob/main/docs/usage.md#use-actionlint-on-github-actions
+      # But added `mv` command to not interfere with any checks of changed files
+      # via `git status` in subsequent steps.
+      - name: Check Github workflow files
+        shell: bash
+        run: |
+          BIN_DIR=$(go env GOPATH)/bin/actionlint
+
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          mv ./actionlint "${BIN_DIR}"
+          ${BIN_DIR} -color
+
+      - name: Check go vet
+        run: |
+          go vet ./...
+
+      - name: Check Templ
+        run: |
+          templ fmt -fail .
+          templ generate
+          git diff --exit-code
+
