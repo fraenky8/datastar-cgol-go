@@ -88,6 +88,9 @@ type tap struct {
 func NewGame(numCells uint, refreshInterval time.Duration, l *slog.Logger) *Game {
 	logger := l.WithGroup("game")
 
+	// Minimum seems to be 10 cells, but we want an even board and the next best number is 4*4=16
+	numCells = max(16, numCells)
+
 	sqrt := int(math.Sqrt(float64(numCells)))
 	n := uint(sqrt * sqrt)
 	logFn := logger.Info
