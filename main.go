@@ -62,7 +62,6 @@ type pageData struct {
 	runtimeVersion string
 	revision       string
 	buildTS        string
-	cells          Cells
 	debug          bool
 }
 
@@ -73,7 +72,7 @@ func main() {
 	var cfg config
 	fs := flag.NewFlagSet("datastar-cgol-go", flag.ExitOnError)
 	fs.StringVar(&cfg.Addr, "addr", defaultAddr, "address for the server to listen on, in the form `host:port`")
-	fs.UintVar(&cfg.NumCells, "num-cells", 2500, "number of cells, will be rounded down if not sqrt'able")
+	fs.UintVar(&cfg.NumCells, "num-cells", 2500, "number of cells, will be rounded down if not sqrt'able; minimum 16")
 	fs.DurationVar(&cfg.RefreshInterval, "refresh-int", 200*time.Millisecond, "refresh interval")
 
 	if err := fs.Parse(os.Args[1:]); err != nil {
@@ -109,7 +108,6 @@ func main() {
 			runtimeVersion: runtime.Version(),
 			revision:       revision,
 			buildTS:        buildTimestamp,
-			cells:          Cells{}, // Note empty board, but after cfg.RefreshInterval will be set.
 			debug:          debug,
 		}
 

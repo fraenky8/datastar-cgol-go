@@ -5,6 +5,7 @@ templ indexPage(data pageData) {
 	<html lang="en">
 		<head>
 			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<link rel="stylesheet" href="assets/style.css"/>
 			<script type="module" src="assets/datastar.js"></script>
 			<title>Conway's Game of Life with Datastar and Go</title>
@@ -16,7 +17,8 @@ templ indexPage(data pageData) {
 				</header>
 				<main id="main" data-init="@post('/', {retry: 'never'})">
 					<div id="game-layout">
-						@gameBoard(data.cells)
+						// Note empty board, but will be set after cfg.RefreshInterval.
+						@gameBoard(nil)
 						<aside id="game-sidebar">
 							@clientCount(0)
 							<!-- future buttons go here -->
@@ -62,14 +64,8 @@ templ gameBoard(cells Cells) {
 		for y, row := range cells {
 			<div class="row">
 				for x, alive := range row {
-					{{
-						class := "cell"
-						if alive {
-							class += " alive"
-						}
-					}}
 					<div
-						class={ class }
+						class={ "cell", templ.KV("alive", alive) }
 						data-x={ x }
 						data-y={ y }
 					></div>

@@ -1,3 +1,5 @@
+[![static analysis](https://github.com/fraenky8/datastar-cgol-go/actions/workflows/go.yml/badge.svg)](https://github.com/fraenky8/datastar-cgol-go/actions/workflows/go.yml)
+
 # Conway's Game of Life with Go and Datastar
 
 A realtime, multiplayer implementation of Conway's Game of Life built with Go
