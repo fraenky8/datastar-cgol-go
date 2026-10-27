@@ -6,22 +6,24 @@ github.com/CAFxX/httpcompression/contrib/compress/gzip
 github.com/CAFxX/httpcompression/contrib/compress/zlib
 github.com/CAFxX/httpcompression/contrib/internal/utils
 github.com/CAFxX/httpcompression/contrib/klauspost/zstd
-# github.com/a-h/templ v0.3.1020
-## explicit; go 1.25.0
+# github.com/a-h/templ v0.3.1100
+## explicit; go 1.26.0
 github.com/a-h/templ
+github.com/a-h/templ/internal/htmlattr
 github.com/a-h/templ/runtime
 github.com/a-h/templ/safehtml
-# github.com/andybalholm/brotli v1.2.3
+# github.com/andybalholm/brotli v1.2.7
 ## explicit; go 1.22
 github.com/andybalholm/brotli
 github.com/andybalholm/brotli/matchfinder
-# github.com/klauspost/compress v1.20.0
+# github.com/klauspost/compress v1.20.3
 ## explicit; go 1.25
 github.com/klauspost/compress
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/huff0
 github.com/klauspost/compress/internal/cpuinfo
 github.com/klauspost/compress/internal/le
+github.com/klauspost/compress/internal/regmask
 github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
